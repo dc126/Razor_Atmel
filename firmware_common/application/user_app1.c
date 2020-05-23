@@ -89,10 +89,10 @@ static u8 UserApp_au8MyName[] ="   PLEASE CHOOSE !    ";
 void UserApp1Initialize(void)
 {
   LCDMessage(LINE1_START_ADDR, UserApp_au8MyName);
-  LCDMessage(LINE2_START_ADDR, "1");
-  LCDMessage(LINE2_START_ADDR + 6, "2");
-  LCDMessage(LINE2_START_ADDR + 13, "3");
-  LCDMessage(LINE2_END_ADDR - 2, "off");
+  LCDMessage(LINE2_START_ADDR, "on");       /*开始按钮*/
+  LCDMessage(LINE2_START_ADDR + 6, "1");    /*对应1号白灯*/
+  LCDMessage(LINE2_START_ADDR + 13, "2");   /*对应2号紫灯*/
+  LCDMessage(LINE2_END_ADDR - 2, "3");      /*对应3号蓝灯*/
 
   /* All discrete LEDs to off */
   LedOff(WHITE);
@@ -103,6 +103,9 @@ void UserApp1Initialize(void)
   LedOff(YELLOW);
   LedOff(ORANGE);
   LedOff(RED);
+  
+   LedOff(LCD_GREEN);
+   LedOff(LCD_RED);
   /* If good initialization, set state to Idle */
   if( 1 )
   {
@@ -150,509 +153,134 @@ State Machine Function Definitions
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Wait for ??? */
 static void UserApp1SM_Idle(void)
-{
-  if( WasButtonPressed(BUTTON3) )
-{ 
-  
-  LedOff(WHITE);
-  LedOff(PURPLE);
-  LedOff(BLUE);
-  LedOff(CYAN);
-  LedOff(GREEN);
-  LedOff(YELLOW);
-  LedOff(ORANGE);
-  LedOff(RED);
-  
-  PWMAudioOff(BUZZER1);
-  PWMAudioOff(BUZZER2);
-  
-  ButtonAcknowledge(BUTTON3);
-  ButtonAcknowledge(BUTTON2);
-  ButtonAcknowledge(BUTTON1);
-  ButtonAcknowledge(BUTTON0);
+{  
    
-}
-else
-{
-  //1 
-  if(!(IsButtonPressed(BUTTON1) || IsButtonPressed(BUTTON2) ) ) 
-  {if( WasButtonPressed(BUTTON0) )
-   {
-    LedOff(WHITE);
-  LedOff(PURPLE);
-  LedOff(BLUE);
-  LedOff(CYAN);
-  LedOff(GREEN);
-  LedOff(YELLOW);
-  LedOff(ORANGE);
-  LedOff(RED);
-  
-    static u16 au16NotesLeft[]    = {F4, F4, A4, A4, D4, D4, F4, F4, A3S, A3S, D4, D4, C4, C4};
-  static u16 au16DurationLeft[] = {HN, HN, HN, HN, HN, HN, HN, HN, HN,  HN,  HN, HN, HN, HN};
-  static u16 au16NoteTypeLeft[] = {RT, RT, RT, RT, RT, RT, RT, RT, RT,  RT,  RT, RT, RT, RT};
-  static u8 u8IndexLeft = 0 ,  u8CurrentIndex;
-  static u32 u32LeftTimer = 0;
-  static u16 u16CurrentDurationLeft = 0;
-  static u16 u16NoteSilentDurationLeft = 0;
-  static bool bNoteActiveNextLeft = TRUE;
-  
-  /* Left Hand */
-  if(IsTimeUp(&u32LeftTimer, (u32)u16CurrentDurationLeft))
-  {
-    u32LeftTimer = G_u32SystemTime1ms;
-    u8CurrentIndex = u8IndexLeft;
-    
-    /* Set up to play current note */
-    if(bNoteActiveNextLeft)
-    {
-      if(au16NoteTypeLeft[u8CurrentIndex] == RT)
-      {
-        u16CurrentDurationLeft = au16DurationLeft[u8CurrentIndex] - REGULAR_NOTE_ADJUSTMENT;
-        u16NoteSilentDurationLeft = REGULAR_NOTE_ADJUSTMENT;
-        bNoteActiveNextLeft = FALSE;
-      }
-    
-      else if(au16NoteTypeLeft[u8CurrentIndex] == ST)
-      {
-        u16CurrentDurationLeft = STACCATO_NOTE_TIME;
-        u16NoteSilentDurationLeft = au16DurationLeft[u8CurrentIndex] - STACCATO_NOTE_TIME;
-        bNoteActiveNextLeft = FALSE;
-      }
-
-      else if(au16NoteTypeLeft[u8CurrentIndex] == HT)
-      {
-        u16CurrentDurationLeft = au16DurationLeft[u8CurrentIndex];
-        u16NoteSilentDurationLeft = 0;
-        bNoteActiveNextLeft = TRUE;
-
-        u8IndexLeft++;
-        if(u8IndexLeft == sizeof(au16NotesLeft) / sizeof(u16) )
-        {
-          u8IndexLeft = 0;
-        }
-      }
-
-      /* Set the buzzer frequency for the note (handle NO special case) */
-      if(au16NotesLeft[u8CurrentIndex] != NO)
-      {
-        PWMAudioSetFrequency(BUZZER2, au16NotesLeft[u8CurrentIndex]);
-        PWMAudioOn(BUZZER2);
-      }
-      else
-      {                
-        PWMAudioOff(BUZZER2);
-      }
-    }
-    else
-    {
-      PWMAudioOff(BUZZER2);
-      u32LeftTimer = G_u32SystemTime1ms;
-      u16CurrentDurationLeft = u16NoteSilentDurationLeft;
-      bNoteActiveNextLeft = TRUE;
-      
-      u8IndexLeft++;
-      if(u8IndexLeft == sizeof(au16NotesLeft) / sizeof(u16) )
-      {
-        u8IndexLeft = 0;
-      }
-    } /* end else if(bNoteActiveNextLeft) */
-  } /* end if(IsTimeUp(&u32LeftTimer, (u32)u16CurrentDurationLeft)) */
-    if(au16NotesLeft[u8CurrentIndex] != NO)
-      {
-        PWMAudioSetFrequency(BUZZER2, au16NotesLeft[u8CurrentIndex]);
-        PWMAudioOn(BUZZER2);
-        
-        /* LED control */
-        switch(au16NotesLeft[u8CurrentIndex])
-        {
-          case F4:
-            LedOn(WHITE);
-            break;
-            
-          case E5:
-            LedOn(PURPLE);
-            break;
-            
-          case A4:
-            LedOn(BLUE);
-            break;
-            
-          case D4:
-            LedOn(CYAN);
-            break;
-            
-          case A3S:
-            LedOn(GREEN);
-            break;
-            
-          case C4:
-            LedOn(YELLOW);
-            break;
-            
-          case D5:
-            LedOn(ORANGE);
-            break;
-            
-          case A5:
-            LedOn(RED);
-            break;
-            
-          default:
-            break;
-            
-        } /* end switch */
-      }
-      else
-      {                
-        PWMAudioOff(BUZZER2);
-        LedOff(WHITE);
-        LedOff(PURPLE);
-        LedOff(BLUE);
-        LedOff(CYAN);
-        LedOff(GREEN);
-        LedOff(YELLOW);
-        LedOff(ORANGE);
-        LedOff(RED);
-      }/* end if(IsTimeUp(&u32LeftTimer, (u32)u16CurrentDurationLeft)) */
-   }
-  
- } 
- else
- {
-   PWMAudioOff(BUZZER2);
-   PWMAudioOff(BUZZER1);
-        LedOff(WHITE);
-        LedOff(PURPLE);
-        LedOff(BLUE);
-        LedOff(CYAN);
-        LedOff(GREEN);
-        LedOff(YELLOW);
-        LedOff(ORANGE);
-        LedOff(RED);
-   ButtonAcknowledge(BUTTON0);
- }
- 
-  //2
-  if(!(IsButtonPressed(BUTTON1) || IsButtonPressed(BUTTON0) ) ) 
-  {if( WasButtonPressed(BUTTON2) )
-   {
-     LedOff(WHITE);
-  LedOff(PURPLE);
-  LedOff(BLUE);
-  LedOff(CYAN);
-  LedOff(GREEN);
-  LedOff(YELLOW);
-  LedOff(ORANGE);
-  LedOff(RED);
-  
-    static u16 au16NotesLeft[]    = {E4, E4, B4, B4, C5S, C5S, B4, A4, A4, G4S, G4S, F4S, F4S, E4};
-  static u16 au16DurationLeft[] = {EN, EN, EN, EN, EN, EN, EN, EN, EN,  EN,  EN, EN, EN, EN};
-  static u16 au16NoteTypeLeft[] = {RT, RT, RT, RT, RT, RT, RT, RT, RT,  RT,  RT, RT, RT, RT};
-  static u8 u8IndexLeft = 0 ,  u8CurrentIndex;
-  static u32 u32LeftTimer = 0;
-  static u16 u16CurrentDurationLeft = 0;
-  static u16 u16NoteSilentDurationLeft = 0;
-  static bool bNoteActiveNextLeft = TRUE;
-  
-  /* Left Hand */
-  if(IsTimeUp(&u32LeftTimer, (u32)u16CurrentDurationLeft))
-  {
-    u32LeftTimer = G_u32SystemTime1ms;
-    u8CurrentIndex = u8IndexLeft;
-    
-    /* Set up to play current note */
-    if(bNoteActiveNextLeft)
-    {
-      if(au16NoteTypeLeft[u8CurrentIndex] == RT)
-      {
-        u16CurrentDurationLeft = au16DurationLeft[u8CurrentIndex] - REGULAR_NOTE_ADJUSTMENT;
-        u16NoteSilentDurationLeft = REGULAR_NOTE_ADJUSTMENT;
-        bNoteActiveNextLeft = FALSE;
-      }
-    
-      else if(au16NoteTypeLeft[u8CurrentIndex] == ST)
-      {
-        u16CurrentDurationLeft = STACCATO_NOTE_TIME;
-        u16NoteSilentDurationLeft = au16DurationLeft[u8CurrentIndex] - STACCATO_NOTE_TIME;
-        bNoteActiveNextLeft = FALSE;
-      }
-
-      else if(au16NoteTypeLeft[u8CurrentIndex] == HT)
-      {
-        u16CurrentDurationLeft = au16DurationLeft[u8CurrentIndex];
-        u16NoteSilentDurationLeft = 0;
-        bNoteActiveNextLeft = TRUE;
-
-        u8IndexLeft++;
-        if(u8IndexLeft == sizeof(au16NotesLeft) / sizeof(u16) )
-        {
-          u8IndexLeft = 0;
-        }
-      }
-
-      /* Set the buzzer frequency for the note (handle NO special case) */
-      if(au16NotesLeft[u8CurrentIndex] != NO)
-      {
-        PWMAudioSetFrequency(BUZZER2, au16NotesLeft[u8CurrentIndex]);
-        PWMAudioOn(BUZZER2);
-      }
-      else
-      {                
-        PWMAudioOff(BUZZER2);
-      }
-    }
-    else
-    {
-      PWMAudioOff(BUZZER2);
-      u32LeftTimer = G_u32SystemTime1ms;
-      u16CurrentDurationLeft = u16NoteSilentDurationLeft;
-      bNoteActiveNextLeft = TRUE;
-      
-      u8IndexLeft++;
-      if(u8IndexLeft == sizeof(au16NotesLeft) / sizeof(u16) )
-      {
-        u8IndexLeft = 0;
-      }
-    } /* end else if(bNoteActiveNextLeft) */
-  } /* end if(IsTimeUp(&u32LeftTimer, (u32)u16CurrentDurationLeft)) */
-    if(au16NotesLeft[u8CurrentIndex] != NO)
-      {
-        PWMAudioSetFrequency(BUZZER2, au16NotesLeft[u8CurrentIndex]);
-        PWMAudioOn(BUZZER2);
-        
-        /* LED control */
-        switch(au16NotesLeft[u8CurrentIndex])
-        {
-          case D5S:
-            LedOn(WHITE);
-            break;
-            
-          case E5:
-            LedOn(PURPLE);
-            break;
-            
-          case A4:
-            LedOn(RED);
-            break;
-            
-          case B4:
-            LedOn(CYAN);
-            break;
-            
-          case F4S:
-            LedOn(GREEN);
-            break;
-            
-          case E4:
-            LedOn(YELLOW);
-            break;
-            
-          case D5:
-            LedOn(ORANGE);
-            break;
-            
-          case G4S:
-            LedOn(BLUE);
-            break;
-            
-          default:
-            break;
-            
-        } /* end switch */
-      }
-      else
-      {                
-        PWMAudioOff(BUZZER2);
-        LedOff(WHITE);
-        LedOff(PURPLE);
-        LedOff(BLUE);
-        LedOff(CYAN);
-        LedOff(GREEN);
-        LedOff(YELLOW);
-        LedOff(ORANGE);
-        LedOff(RED);
-      }/* end if(IsTimeUp(&u32LeftTimer, (u32)u16CurrentDurationLeft)) */
    
-   }
-  }
-  else
- {
-   PWMAudioOff(BUZZER2);
-   PWMAudioOff(BUZZER1);
-        LedOff(WHITE);
-        LedOff(PURPLE);
-        LedOff(BLUE);
-        LedOff(CYAN);
-        LedOff(GREEN);
-        LedOff(YELLOW);
-        LedOff(ORANGE);
-        LedOff(RED);
-   ButtonAcknowledge(BUTTON2);
- }
- 
-  //3
- if(!(IsButtonPressed(BUTTON0) || IsButtonPressed(BUTTON2) ) ) 
-  {if( WasButtonPressed(BUTTON1) )
-   {  
-    
-     LedOff(WHITE);
-  LedOff(PURPLE);
-  LedOff(BLUE);
-  LedOff(CYAN);
-  LedOff(GREEN);
-  LedOff(YELLOW);
-  LedOff(ORANGE);
-  LedOff(RED);
-  
-
+   if( IsButtonPressed(BUTTON0) )           /*游戏开始，lv 1（间隔1s）*/
+   {
+     u16 lv1=0,lv2=0,time=0;
+     time++ ;
+     if(time == 500)                     /*500ms亮第一个灯*/
+     {
+       LedOn(WHITE);
+       if( IsButtonPressed(BUTTON1) && time<1500 )       /*1按键是否按下,同时防止时间内持续按下，导致多次计数*/
+       {
+          time=1499;
+          LedOff(WHITE);
+          lv1=lv1+1;
+       }
+     }
      
-    static u16 au16NotesLeft[]    = {D5S, E5, A4, F5S, A4, F5S, A5, E4, D5S, D5, D5S, E5, F5S};
-  static u16 au16DurationLeft[] = {HN, FN, HN, HN, HN, FN, FN, HN, FN,  HN,  HN, FN, HN};
-  static u16 au16NoteTypeLeft[] = {RT, RT, RT, RT, RT, RT, RT, RT, RT,  RT,  RT, RT, RT};
-  static u8 u8IndexLeft = 0 ,  u8CurrentIndex;
-  static u32 u32LeftTimer = 0;
-  static u16 u16CurrentDurationLeft = 0;
-  static u16 u16NoteSilentDurationLeft = 0;
-  static bool bNoteActiveNextLeft = TRUE;
-  
-  /* Left Hand */
-  if(IsTimeUp(&u32LeftTimer, (u32)u16CurrentDurationLeft))
-  {
-    u32LeftTimer = G_u32SystemTime1ms;
-    u8CurrentIndex = u8IndexLeft;
+     if(time == 1500)                    /*1500ms亮第二个灯*/
+     {
+       LedOff(WHITE);
+       LedOn(PURPLE);
+       if( IsButtonPressed(BUTTON2) && time<2500)       /*2按键是否按下，同按键1*/
+       {  
+          time=2499;
+          LedOff(PURPLE);
+          lv1=lv1+1;
+       }
+     }
     
-    /* Set up to play current note */
-    if(bNoteActiveNextLeft)
-    {
-      if(au16NoteTypeLeft[u8CurrentIndex] == RT)
-      {
-        u16CurrentDurationLeft = au16DurationLeft[u8CurrentIndex] - REGULAR_NOTE_ADJUSTMENT;
-        u16NoteSilentDurationLeft = REGULAR_NOTE_ADJUSTMENT;
-        bNoteActiveNextLeft = FALSE;
-      }
-    
-      else if(au16NoteTypeLeft[u8CurrentIndex] == ST)
-      {
-        u16CurrentDurationLeft = STACCATO_NOTE_TIME;
-        u16NoteSilentDurationLeft = au16DurationLeft[u8CurrentIndex] - STACCATO_NOTE_TIME;
-        bNoteActiveNextLeft = FALSE;
-      }
-
-      else if(au16NoteTypeLeft[u8CurrentIndex] == HT)
-      {
-        u16CurrentDurationLeft = au16DurationLeft[u8CurrentIndex];
-        u16NoteSilentDurationLeft = 0;
-        bNoteActiveNextLeft = TRUE;
-
-        u8IndexLeft++;
-        if(u8IndexLeft == sizeof(au16NotesLeft) / sizeof(u16) )
-        {
-          u8IndexLeft = 0;
-        }
-      }
-
-      /* Set the buzzer frequency for the note (handle NO special case) */
-      if(au16NotesLeft[u8CurrentIndex] != NO)
-      {
-        PWMAudioSetFrequency(BUZZER2, au16NotesLeft[u8CurrentIndex]);
-        PWMAudioOn(BUZZER2);
-      }
-      else
-      {                
-        PWMAudioOff(BUZZER2);
-      }
-    }
-    else
-    {
-      PWMAudioOff(BUZZER2);
-      u32LeftTimer = G_u32SystemTime1ms;
-      u16CurrentDurationLeft = u16NoteSilentDurationLeft;
-      bNoteActiveNextLeft = TRUE;
+     if(time == 2500)                    /*2500ms亮第三个灯*/
+     {
+       LedOff(PURPLE);
+       LedOn(BLUE);
+       if( IsButtonPressed(BUTTON3) && time<3500 )       /*3按键是否按下，同按键1*/
+       {
+          time=3499;
+          LedOff(BLUE);
+          lv1=lv1+1;
+       }
+     }
+     if(time == 3500)                   /*lv 1时间到，关灯*/
+     {
+       LedOff(BLUE);
+     }  
+     
+     if( lv1 == 3 )                          /*如果3个灯全对，开启lv2，其余灯闪烁三秒过渡到lv2*/
+     {
+       LedBlink(RED, LED_2HZ);
+       LedBlink(CYAN, LED_2HZ);
+       LedBlink(GREEN, LED_2HZ);
+       LedBlink(ORANGE, LED_2HZ);
+       LedBlink(YELLOW, LED_2HZ);
       
-      u8IndexLeft++;
-      if(u8IndexLeft == sizeof(au16NotesLeft) / sizeof(u16) )
-      {
-        u8IndexLeft = 0;
-      }
-    } /* end else if(bNoteActiveNextLeft) */
-  } 
-  if(au16NotesLeft[u8CurrentIndex] != NO)
-      {
-        PWMAudioSetFrequency(BUZZER2, au16NotesLeft[u8CurrentIndex]);
-        PWMAudioOn(BUZZER2);
-        
-        /* LED control */
-        switch(au16NotesLeft[u8CurrentIndex])
+       
+        if(time == 6500)                /*3秒到，关灯，开启lv 2(间隔0.5s)*/               
         {
-          case D5S:
-            LedOn(RED);
-            break;
+            LedOff(CYAN);
+            LedOff(GREEN);
+            LedOff(YELLOW);
+            LedOff(ORANGE);
+            LedOff(RED); 
             
-          case E5:
-            LedOn(BLUE);
-            break;
             
-          case A4:
-            LedOn(PURPLE);
-            break;
-            
-          case F5S:
-            LedOn(CYAN);
-            break;
-            
-          case A5:
-            LedOn(GREEN);
-            break;
-            
-          case E4:
-            LedOn(YELLOW);
-            break;
-            
-          case D5:
-            LedOn(ORANGE);
-            break;
-            
-          case D6:
             LedOn(WHITE);
-            break;
-            
-          default:
-            break;
-            
-        } /* end switch */
-      }
-      else
-      {                
-        PWMAudioOff(BUZZER2);
-        LedOff(WHITE);
-        LedOff(PURPLE);
-        LedOff(BLUE);
-        LedOff(CYAN);
-        LedOff(GREEN);
-        LedOff(YELLOW);
-        LedOff(ORANGE);
-        LedOff(RED);
-      }/* end if(IsTimeUp(&u32LeftTimer, (u32)u16CurrentDurationLeft)) */
+            if( IsButtonPressed(BUTTON1) && time<7000 )       /*同lv 1*/
+           {
+               time=6999;
+               LedOff(WHITE);
+               lv2=lv2+1;
+            }
+        }  
+            if(time == 7000)                                 /*同理 lv 1*/
+           {
+               LedOff(WHITE);
+               LedOn(PURPLE);
+               if( IsButtonPressed(BUTTON2) && time<7500)       
+              {  
+                time=7499;
+                LedOff(PURPLE);
+                lv2=lv2+1;
+               }
+           }
+           
+           if(time == 7500)                                   /*同理 lv 1*/
+           {
+               LedOff(PURPLE);
+               LedOn(BLUE);
+               if( IsButtonPressed(BUTTON3) && time<8000 )       
+               {
+                time=7999;
+                LedOff(BLUE);
+                lv2=lv2+1;
+                }
+            }
+            if(time == 8000)                   /*lv 2时间到，关灯*/
+           {
+            LedOff(BLUE);
+            }  
+        
+            if(lv2 == 3)             /*lv 2判定*/
+            {
+ 
+              LedOn(LCD_GREEN);
+              
+            }
+            else
+            {
+                PWMAudioOn(BUZZER1);    
+                LedOn(LCD_RED);
+                if(time == 9000)
+                {
+                   PWMAudioOff(BUZZER1);
+                }
+            }
+     }
+     else                         /*lv 1 3次未成功，蜂鸣器响1s*/
+     {
+       PWMAudioOn(BUZZER1);  
+       LedOn(LCD_RED);
+       if(time == 4500)
+       {
+         PWMAudioOff(BUZZER1);
+       }
+     }
+         
    }
-  /* Set the buzzer frequency and LED for the note (handle NO special case) */
-  }
-  else
- {
-        PWMAudioOff(BUZZER2);
-        PWMAudioOff(BUZZER1);
-        LedOff(WHITE);
-        LedOff(PURPLE);
-        LedOff(BLUE);
-        LedOff(CYAN);
-        LedOff(GREEN);
-        LedOff(YELLOW);
-        LedOff(ORANGE);
-        LedOff(RED);
-   ButtonAcknowledge(BUTTON1);
- }
-  
-  
-}     
+     
 } /* end UserApp1SM_Idle() */
     
 
