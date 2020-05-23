@@ -87,6 +87,26 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
+  
+    LCDMessage(LINE1_START_ADDR, "      Groundhog     ");
+  LCDMessage(LINE2_START_ADDR, "on");       /*开始按钮*/
+  LCDMessage(LINE2_START_ADDR + 6, "1");    /*对应1号白灯*/
+  LCDMessage(LINE2_START_ADDR + 13, "2");   /*对应2号紫灯*/
+  LCDMessage(LINE2_END_ADDR - 2, "3");      /*对应3号蓝灯*/
+
+  /* All discrete LEDs to off */
+  LedOff(WHITE);
+  LedOff(PURPLE);
+  LedOff(BLUE);
+  LedOff(CYAN);
+  LedOff(GREEN);
+  LedOff(YELLOW);
+  LedOff(ORANGE);
+  LedOff(RED);
+  
+   LedOff(LCD_GREEN);
+   LedOff(LCD_RED);
+
  
   /* If good initialization, set state to Idle */
   if( 1 )
@@ -136,7 +156,130 @@ State Machine Function Definitions
 /* Wait for ??? */
 static void UserApp1SM_Idle(void)
 {
-
+    if( IsButtonPressed(BUTTON0) )           /*游戏开始，lv 1（间隔1s）*/
+   {
+     u16 lv1=0,lv2=0,time=0;
+     time++ ;
+     if(time == 500)                     /*500ms亮第一个灯*/
+     {
+       LedOn(WHITE);
+       if( IsButtonPressed(BUTTON1) && time<1500 )       /*1按键是否按下,同时防止时间内持续按下，导致多次计数*/
+       {
+          time=1499;
+          LedOff(WHITE);
+          lv1=lv1+1;
+       }
+     }
+     
+     if(time == 1500)                    /*1500ms亮第二个灯*/
+     {
+       LedOff(WHITE);
+       LedOn(PURPLE);
+       if( IsButtonPressed(BUTTON2) && time<2500)       /*2按键是否按下，同按键1*/
+       {  
+          time=2499;
+          LedOff(PURPLE);
+          lv1=lv1+1;
+       }
+     }
+    
+     if(time == 2500)                    /*2500ms亮第三个灯*/
+     {
+       LedOff(PURPLE);
+       LedOn(BLUE);
+       if( IsButtonPressed(BUTTON3) && time<3500 )       /*3按键是否按下，同按键1*/
+       {
+          time=3499;
+          LedOff(BLUE);
+          lv1=lv1+1;
+       }
+     }
+     if(time == 3500)                   /*lv 1时间到，关灯*/
+     {
+       LedOff(BLUE);
+     }  
+     
+     if( lv1 == 3 )                          /*如果3个灯全对，开启lv2，其余灯闪烁三秒过渡到lv2*/
+     {
+       LedBlink(RED, LED_2HZ);
+       LedBlink(CYAN, LED_2HZ);
+       LedBlink(GREEN, LED_2HZ);
+       LedBlink(ORANGE, LED_2HZ);
+       LedBlink(YELLOW, LED_2HZ);
+      
+       
+        if(time == 6500)                /*3秒到，关灯，开启lv 2(间隔0.5s)*/               
+        {
+            LedOff(CYAN);
+            LedOff(GREEN);
+            LedOff(YELLOW);
+            LedOff(ORANGE);
+            LedOff(RED); 
+            
+            
+            LedOn(WHITE);
+            if( IsButtonPressed(BUTTON1) && time<7000 )       /*同lv 1*/
+           {
+               time=6999;
+               LedOff(WHITE);
+               lv2=lv2+1;
+            }
+        }  
+            if(time == 7000)                                 /*同理 lv 1*/
+           {
+               LedOff(WHITE);
+               LedOn(PURPLE);
+               if( IsButtonPressed(BUTTON2) && time<7500)       
+              {  
+                time=7499;
+                LedOff(PURPLE);
+                lv2=lv2+1;
+               }
+           }
+           
+           if(time == 7500)                                   /*同理 lv 1*/
+           {
+               LedOff(PURPLE);
+               LedOn(BLUE);
+               if( IsButtonPressed(BUTTON3) && time<8000 )       
+               {
+                time=7999;
+                LedOff(BLUE);
+                lv2=lv2+1;
+                }
+            }
+            if(time == 8000)                   /*lv 2时间到，关灯*/
+           {
+            LedOff(BLUE);
+            }  
+        
+            if(lv2 == 3)             /*lv 2判定*/
+            {
+ 
+              LedOn(LCD_GREEN);
+              
+            }
+            else
+            {
+                PWMAudioOn(BUZZER1);    
+                LedOn(LCD_RED);
+                if(time == 9000)
+                {
+                   PWMAudioOff(BUZZER1);
+                }
+            }
+     }
+     else                         /*lv 1 3次未成功，蜂鸣器响1s*/
+     {
+       PWMAudioOn(BUZZER1);  
+       LedOn(LCD_RED);
+       if(time == 4500)
+       {
+         PWMAudioOff(BUZZER1);
+       }
+     }
+         
+   }
 } /* end UserApp1SM_Idle() */
     
 
